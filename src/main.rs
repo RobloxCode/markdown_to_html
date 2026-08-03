@@ -20,44 +20,74 @@ impl Parser {
         };
 
         let lines = to_lines(&self.fcontent);
-
         let mut parsed = String::new();
 
-        for line in lines {
-            if let Some(first_char) = line.chars().nth(0) {
-                match first_char {
-                    '#' => {
-                        parsed.push_str("<h1>");
-                        parsed.push_str(&line[1..]);
-                        parsed.push_str("</h1>\n");
-                    }
+        let mut i = 0;
+        while i < lines.len() {
+            let line = lines[i];
 
-                    '-' => {
-                        parsed.push_str("<ul>");
-                        parsed.push_str("<li>");
-                        parsed.push_str(&line[1..]);
-                        parsed.push_str("</li>");
-                        parsed.push_str("</ul>\n");
-                    }
+            let first_char = line.chars().nth(0).unwrap_or_default();
+            let sec_char = line.chars().nth(1).unwrap_or_default();
+            let third_char = line.chars().nth(2).unwrap_or_default();
 
-                    '>' => {
-                        parsed.push_str("<blokcquote>\n");
-                        parsed.push_str("<p>");
-                        parsed.push_str(&line[1..]);
-                        parsed.push_str("</p>\n");
-                        parsed.push_str("</blokcquote>\n");
-                    }
+            if first_char == '#' && sec_char == '#' && third_char == '#' {
+                parsed.push_str("<h3>");
+                parsed.push_str(&line[4..]);
+                parsed.push_str("</h3>\n");
+                i += 1;
+                continue;
+            } else if first_char == '#' && sec_char == '#' {
+                parsed.push_str("<h2>");
+                parsed.push_str(&line[3..]);
+                parsed.push_str("</h2>\n");
+                i += 1;
+                continue;
+            } else if first_char == '#' {
+                parsed.push_str("<h1>");
+                parsed.push_str(&line[2..]);
+                parsed.push_str("</h1>\n");
+                i += 1;
+                continue;
+            }
 
-                    '|' => {
-                        parsed.push_str("<table>\n");
-                        parsed.push_str("</table>\n");
-                    }
+            if first_char == '`' && sec_char == '`' && third_char == '`' {
+                parsed.push_str("<pre><code class=\"language-js\">");
+                parsed.push_str(&lines[i + 1]);
+                parsed.push_str("</code></pre>\n");
+                i += 3;
+                continue;
+            }
 
-                    _ => {
-                        parsed.push_str("<p>");
-                        parsed.push_str(&line[1..]);
-                        parsed.push_str("</p>\n");
-                    }
+            match first_char {
+                '-' => {
+                    parsed.push_str("<ul>");
+                    parsed.push_str("<li>");
+                    parsed.push_str(&line[1..]);
+                    parsed.push_str("</li>");
+                    parsed.push_str("</ul>\n");
+                    i += 1;
+                }
+
+                '>' => {
+                    parsed.push_str("<blockquote>\n");
+                    parsed.push_str("<p>");
+                    parsed.push_str(&line[1..]);
+                    parsed.push_str("</p>\n");
+                    parsed.push_str("</blockquote>\n");
+                    i += 1;
+                }
+
+                '|' => {
+                    parsed.push_str("<table>\n");
+                    parsed.push_str("</table>\n");
+                    i += 1;
+                }
+
+                _ => {
+                    parsed.push_str("<p>");
+                    parsed.push_str(&line[1..]);
+                    parsed.push_str("</p>\n");
+                    i += 1;
                 }
             }
         }
@@ -79,5 +109,5 @@ fn read_file(path: &str) -> Result<String, std::io::Error> {
 }
 
 fn to_lines(content: &str) -> Vec<&str> {
-    content.lines().collect()
+    content.lines().filter(|&c| !c.is_empty()).collect()
 }
