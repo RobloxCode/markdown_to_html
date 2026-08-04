@@ -18,7 +18,7 @@ fn parse(input: &str) -> Ast {
     let mut lines = input.lines().peekable();
 
     while let Some(line) = lines.next() {
-        let mut trimmed = line.trim();
+        let trimmed = line.trim();
 
         if trimmed.is_empty() {
             continue;
@@ -26,22 +26,30 @@ fn parse(input: &str) -> Ast {
 
         if trimmed.starts_with('#') {
             let level = trimmed.chars().take_while(|&c| c == '#').count();
-            let text = trimmed[level..].to_string();
+            let text = trimmed[level + 1..].to_string();
 
             document.push(Node::Heading { level, text });
         } else if trimmed.starts_with("- ") {
             let mut items = Vec::new();
 
-            while trimmed.starts_with("- ") {
-                println!("next line is a list: {:?}", trimmed);
-                items.push(trimmed.to_string());
-                trimmed = lines.next().unwrap();
+            items.push(trimmed[2..].to_string());
+
+            while let Some(&next) = lines.peek() {
+                let ntri = next.trim();
+
+                if ntri.starts_with("- ") {
+                    items.push(ntri[2..].to_string());
+                    lines.next();
+                } else {
+                    break;
+                }
             }
 
             document.push(Node::List {
                 ordered: false,
-                items: items,
+                items,
             });
+            continue;
         } else {
             document.push(Node::Paragraph(trimmed.to_string()));
         }
