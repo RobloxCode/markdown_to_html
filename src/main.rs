@@ -18,13 +18,32 @@ fn parse(input: &str) -> Ast {
     let mut lines = input.lines().peekable();
 
     while let Some(line) = lines.next() {
-        let trimmed = line.trim();
+        let mut trimmed = line.trim();
+
+        if trimmed.is_empty() {
+            continue;
+        }
 
         if trimmed.starts_with('#') {
             let level = trimmed.chars().take_while(|&c| c == '#').count();
             let text = trimmed[level..].to_string();
 
             document.push(Node::Heading { level, text });
+        } else if trimmed.starts_with("- ") {
+            let mut items = Vec::new();
+
+            while trimmed.starts_with("- ") {
+                println!("next line is a list: {:?}", trimmed);
+                items.push(trimmed.to_string());
+                trimmed = lines.next().unwrap();
+            }
+
+            document.push(Node::List {
+                ordered: false,
+                items: items,
+            });
+        } else {
+            document.push(Node::Paragraph(trimmed.to_string()));
         }
     }
 
