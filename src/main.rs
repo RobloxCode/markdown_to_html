@@ -1,113 +1,127 @@
-use std::fs;
-
-struct Parser {
-    path: &'static str,
-    fcontent: String,
+#[derive(Debug)]
+enum Node {
+    Heading {
+        level: usize,
+        text: String,
+    },
+    Paragraph(String),
+    List {
+        ordered: bool,
+        items: Vec<String>,
+    },
+    Code {
+        language: String,
+        code_lines: String,
+    },
+    Quote(String),
+    HorizontalRule,
 }
 
-impl Parser {
-    fn new(path: &'static str) -> Self {
-        Self {
-            path,
-            fcontent: String::new(),
+#[derive(Debug)]
+struct Ast {
+    document: Vec<Node>,
+}
+
+fn parse(input: &str) -> Ast {
+    let mut document = Vec::new();
+    let mut lines = input.lines().peekable();
+
+    while let Some(line) = lines.next() {
+        let trimmed = line.trim();
+
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        if trimmed.starts_with('#') {
+            let level = trimmed.chars().take_while(|&c| c == '#').count();
+            let text = trimmed[level + 1..].to_string();
+
+            document.push(Node::Heading { level, text });
+        } else if trimmed.starts_with("- ") {
+            let mut items = Vec::new();
+
+            items.push(trimmed[2..].to_string());
+
+            while let Some(&next) = lines.peek() {
+                let ntri = next.trim();
+
+                if ntri.starts_with("- ") {
+                    items.push(ntri[2..].to_string());
+                    lines.next();
+                } else {
+                    break;
+                }
+            }
+
+            document.push(Node::List {
+                ordered: false,
+                items,
+            });
+
+            continue;
+        } else if trimmed.starts_with("```") {
+            let language = trimmed[3..].to_string();
+            let mut code_lines = String::new();
+
+            while let Some(&next) = lines.peek() {
+                let ntri = next.trim();
+
+                if ntri.starts_with("```") {
+                    lines.next();
+                    break;
+                }
+
+                code_lines.push_str(ntri);
+                lines.next();
+            }
+
+            document.push(Node::Code {
+                language,
+                code_lines,
+            });
+
+            continue;
+        } else if trimmed.starts_with('>') {
+            document.push(Node::Quote(trimmed[2..].to_string()));
+            continue;
+        } else {
+            document.push(Node::Paragraph(trimmed.to_string()));
+            continue;
         }
     }
 
-    fn to_html(&mut self) -> String {
-        self.fcontent = match read_file(self.path) {
-            Ok(content) => content,
-            Err(e) => panic!("couldn't open {}: {}", self.path, e),
-        };
-
-        let lines = to_lines(&self.fcontent);
-        let mut parsed = String::new();
-
-        let mut i = 0;
-        while i < lines.len() {
-            let line = lines[i];
-
-            let first_char = line.chars().nth(0).unwrap_or_default();
-            let sec_char = line.chars().nth(1).unwrap_or_default();
-            let third_char = line.chars().nth(2).unwrap_or_default();
-
-            if first_char == '#' && sec_char == '#' && third_char == '#' {
-                parsed.push_str("<h3>");
-                parsed.push_str(&line[4..]);
-                parsed.push_str("</h3>\n");
-                i += 1;
-                continue;
-            } else if first_char == '#' && sec_char == '#' {
-                parsed.push_str("<h2>");
-                parsed.push_str(&line[3..]);
-                parsed.push_str("</h2>\n");
-                i += 1;
-                continue;
-            } else if first_char == '#' {
-                parsed.push_str("<h1>");
-                parsed.push_str(&line[2..]);
-                parsed.push_str("</h1>\n");
-                i += 1;
-                continue;
-            }
-
-            if first_char == '`' && sec_char == '`' && third_char == '`' {
-                parsed.push_str("<pre><code class=\"language-js\">");
-                parsed.push_str(&lines[i + 1]);
-                parsed.push_str("</code></pre>\n");
-                i += 3;
-                continue;
-            }
-
-            match first_char {
-                '-' => {
-                    parsed.push_str("<ul>");
-                    parsed.push_str("<li>");
-                    parsed.push_str(&line[1..]);
-                    parsed.push_str("</li>");
-                    parsed.push_str("</ul>\n");
-                    i += 1;
-                }
-
-                '>' => {
-                    parsed.push_str("<blockquote>\n");
-                    parsed.push_str("<p>");
-                    parsed.push_str(&line[1..]);
-                    parsed.push_str("</p>\n");
-                    parsed.push_str("</blockquote>\n");
-                    i += 1;
-                }
-
-                '|' => {
-                    parsed.push_str("<table>\n");
-                    parsed.push_str("</table>\n");
-                    i += 1;
-                }
-
-                _ => {
-                    parsed.push_str("<p>");
-                    parsed.push_str(&line[1..]);
-                    parsed.push_str("</p>\n");
-                    i += 1;
-                }
-            }
-        }
-
-        fs::write("content.html", parsed.clone()).unwrap();
-
-        parsed
-    }
+    Ast { document }
 }
 
 fn main() {
-    let mut p = Parser::new("src/md_src.md");
-    let html = p.to_html();
-    println!("{}", html);
-}
+    let ast = parse(
+        "# Product Update
 
-fn read_file(path: &str) -> Result<String, std::io::Error> {
-    fs::read_to_string(path)
-}
+        ## Highlights
 
-fn to_lines(content: &str) -> Vec<&str> {
-    content.lines().filter(|&c| !c.is_empty()).collect()
+        Ship notes are easier to publish when your draft stays in Markdown.
+
+        - Faster editing for docs teams
+        - Simple formatting for writers
+        - Easy reuse inside CMS editors
+
+        > Keep the structure clean before you paste the final HTML.
+
+        ### Release Table
+
+        | Area | Status |
+        | --- | --- |
+        | Docs | Ready |
+        | Email | Drafting |
+
+        ```js
+        console.log('Markdown to HTML');
+        ```
+
+        Visit [the release page](https://markdowntoword.io/) for the full changelog.
+        ",
+    );
+
+    println!("{:#?}", ast);
 }
