@@ -1,9 +1,18 @@
 #[derive(Debug)]
 enum Node {
-    Heading { level: usize, text: String },
+    Heading {
+        level: usize,
+        text: String,
+    },
     Paragraph(String),
-    List { ordered: bool, items: Vec<String> },
-    Code(String),
+    List {
+        ordered: bool,
+        items: Vec<String>,
+    },
+    Code {
+        language: String,
+        code_lines: String,
+    },
     Quote(String),
     HorizontalRule,
 }
@@ -49,9 +58,36 @@ fn parse(input: &str) -> Ast {
                 ordered: false,
                 items,
             });
+
+            continue;
+        } else if trimmed.starts_with("```") {
+            let language = trimmed[3..].to_string();
+            let mut code_lines = String::new();
+
+            while let Some(&next) = lines.peek() {
+                let ntri = next.trim();
+
+                if ntri.starts_with("```") {
+                    lines.next();
+                    break;
+                }
+
+                code_lines.push_str(ntri);
+                lines.next();
+            }
+
+            document.push(Node::Code {
+                language,
+                code_lines,
+            });
+
+            continue;
+        } else if trimmed.starts_with('>') {
+            document.push(Node::Quote(trimmed[2..].to_string()));
             continue;
         } else {
             document.push(Node::Paragraph(trimmed.to_string()));
+            continue;
         }
     }
 
