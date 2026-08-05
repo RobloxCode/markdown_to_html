@@ -175,6 +175,8 @@ fn render(ast: &Ast) -> String {
                 html.push_str(&format!("<tbody>"));
 
                 for row in rows {
+                    // TODO: we could filter the rows that contain "---" instead of
+                    // checking for every items in the list every iteration
                     if row.iter().any(|s| s.contains("---")) {
                         continue;
                     }
