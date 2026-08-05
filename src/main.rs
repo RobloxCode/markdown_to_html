@@ -20,6 +20,7 @@ enum Node {
     Quote(String),
 
     Table {
+        // TODO: should be row
         cols: Vec<Vec<String>>,
     },
 }
@@ -133,6 +134,55 @@ fn parse(input: &str) -> Ast {
     Ast { document }
 }
 
+fn render(ast: &Ast) -> String {
+    let mut html = String::new();
+
+    for item in ast.document.iter() {
+        match item {
+            Node::Heading { level, text } => html.push_str(&format!("<h{level}>{text}</h<level>")),
+            Node::Paragraph(t) => html.push_str(&format!("<p>{t}</p>")),
+            Node::List { ordered: _, items } => {
+                html.push_str(&format!("<ul>"));
+
+                for s in items {
+                    html.push_str(&format!("<li>{s}</li>"));
+                }
+
+                html.push_str(&format!("</ul>"));
+            }
+            Node::Code {
+                language,
+                code_lines,
+            } => html.push_str(&format!(
+                "<pre><code = class=\"language-{language}\">{code_lines}</code></pre>"
+            )),
+            Node::Quote(t) => html.push_str(&format!("<q>{t}</q>")),
+            Node::Table { cols } => {
+                html.push_str(&format!("<div class=\"table-wrapper\"><table><thead><tr>"));
+
+                // TODO: have to figure out how to put the table headers
+                // for h in headers {
+                //     html.push_str(&format!("<tht>{h}</th>"));
+                // }
+
+                html.push_str(&format!("</tr></thead>"));
+
+                html.push_str(&format!("<tbody>"));
+
+                for row in cols {
+                    for col in row {
+                        html.push_str(&format!("<tr><td>{col}</td></tr>"));
+                    }
+                }
+
+                html.push_str(&format!("</tbody></table></div>"));
+            }
+        }
+    }
+
+    html
+}
+
 fn main() {
     let ast = parse(
         "# Product Update
@@ -162,5 +212,7 @@ fn main() {
         ",
     );
 
-    println!("{:#?}", ast);
+    let html = render(&ast);
+
+    println!("{:?}", html);
 }
