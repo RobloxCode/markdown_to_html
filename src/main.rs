@@ -8,6 +8,7 @@ enum Node {
     Paragraph(String),
 
     List {
+        // TODO: have to be able to check when the list is ordered (1., 2., 3., ...)
         ordered: bool,
         items: Vec<String>,
     },
