@@ -173,7 +173,6 @@ fn render(ast: &Ast) -> String {
                 }
 
                 html.push_str(&format!("</tr></thead>"));
-
                 html.push_str(&format!("<tbody>"));
 
                 for row in rows {
