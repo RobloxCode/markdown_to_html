@@ -4,17 +4,24 @@ enum Node {
         level: usize,
         text: String,
     },
+
     Paragraph(String),
+
     List {
         ordered: bool,
         items: Vec<String>,
     },
+
     Code {
         language: String,
         code_lines: String,
     },
+
     Quote(String),
-    HorizontalRule,
+
+    Table {
+        cols: Vec<Vec<String>>,
+    },
 }
 
 #[derive(Debug)]
@@ -84,6 +91,38 @@ fn parse(input: &str) -> Ast {
             continue;
         } else if trimmed.starts_with('>') {
             document.push(Node::Quote(trimmed[2..].to_string()));
+            continue;
+        } else if trimmed.starts_with('|') {
+            let mut cols: Vec<Vec<String>> = Vec::new();
+
+            cols.push(
+                trimmed
+                    .split('|')
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                    .map(str::to_string)
+                    .collect::<Vec<_>>(),
+            );
+
+            while let Some(&next) = lines.peek() {
+                let ntri = next.trim();
+
+                if !ntri.starts_with('|') {
+                    break;
+                }
+
+                cols.push(
+                    ntri.split('|')
+                        .map(|s| s.trim())
+                        .filter(|s| !s.is_empty())
+                        .map(|s| s.to_string())
+                        .collect::<Vec<_>>(),
+                );
+
+                lines.next();
+            }
+
+            document.push(Node::Table { cols });
             continue;
         } else {
             document.push(Node::Paragraph(trimmed.to_string()));
