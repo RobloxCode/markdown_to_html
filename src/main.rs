@@ -139,7 +139,9 @@ fn render(ast: &Ast) -> String {
 
     for item in ast.document.iter() {
         match item {
-            Node::Heading { level, text } => html.push_str(&format!("<h{level}>{text}</h<level>")),
+            Node::Heading { level, text } => {
+                html.push_str(&format!("<h{level}>{text}</h<{level}>"))
+            }
             Node::Paragraph(t) => html.push_str(&format!("<p>{t}</p>")),
             Node::List { ordered: _, items } => {
                 html.push_str(&format!("<ul>"));
