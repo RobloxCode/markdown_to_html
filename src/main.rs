@@ -21,7 +21,7 @@ enum Node {
 
     Table {
         // TODO: should be row
-        cols: Vec<Vec<String>>,
+        rows: Vec<Vec<String>>,
     },
 }
 
@@ -94,9 +94,9 @@ fn parse(input: &str) -> Ast {
             document.push(Node::Quote(trimmed[2..].to_string()));
             continue;
         } else if trimmed.starts_with('|') {
-            let mut cols: Vec<Vec<String>> = Vec::new();
+            let mut rows: Vec<Vec<String>> = Vec::new();
 
-            cols.push(
+            rows.push(
                 trimmed
                     .split('|')
                     .map(str::trim)
@@ -112,7 +112,7 @@ fn parse(input: &str) -> Ast {
                     break;
                 }
 
-                cols.push(
+                rows.push(
                     ntri.split('|')
                         .map(|s| s.trim())
                         .filter(|s| !s.is_empty())
@@ -123,7 +123,7 @@ fn parse(input: &str) -> Ast {
                 lines.next();
             }
 
-            document.push(Node::Table { cols });
+            document.push(Node::Table { rows });
             continue;
         } else {
             document.push(Node::Paragraph(trimmed.to_string()));
@@ -159,7 +159,7 @@ fn render(ast: &Ast) -> String {
                 "<pre><code = class=\"language-{language}\">{code_lines}</code></pre>"
             )),
             Node::Quote(t) => html.push_str(&format!("<q>{t}</q>")),
-            Node::Table { cols } => {
+            Node::Table { rows } => {
                 html.push_str(&format!("<div class=\"table-wrapper\"><table><thead><tr>"));
 
                 // TODO: have to figure out how to put the table headers
@@ -171,7 +171,7 @@ fn render(ast: &Ast) -> String {
 
                 html.push_str(&format!("<tbody>"));
 
-                for row in cols {
+                for row in rows {
                     for col in row {
                         html.push_str(&format!("<tr><td>{col}</td></tr>"));
                     }
