@@ -136,6 +136,12 @@ fn parse(input: &str) -> Ast {
 fn render(ast: &Ast) -> String {
     let html = String::new();
 
+    for &item in ast.document.iter() {
+        match item {
+            Node::Heading => html.push_str(""),
+        }
+    }
+
     html
 }
 
@@ -168,5 +174,7 @@ fn main() {
         ",
     );
 
-    println!("{:#?}", ast);
+    let html = render(&ast);
+
+    println!("{:?}", html);
 }
