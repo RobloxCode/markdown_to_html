@@ -20,7 +20,6 @@ enum Node {
     Quote(String),
 
     Table {
-        // TODO: should be row
         rows: Vec<Vec<String>>,
     },
 }
