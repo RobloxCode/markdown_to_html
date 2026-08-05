@@ -107,6 +107,8 @@ fn parse(input: &str) -> Ast {
                     .collect::<Vec<_>>(),
             );
 
+            lines.next();
+
             while let Some(&next) = lines.peek() {
                 let ntri = next.trim();
 
@@ -175,19 +177,9 @@ fn render(ast: &Ast) -> String {
                 html.push_str(&format!("<tbody>"));
 
                 for row in rows {
-                    // TODO: we could filter the rows that contain "---" instead of
-                    // checking for every items in the list every iteration
-                    if row.iter().any(|s| s.contains("---")) {
-                        continue;
-                    }
-
                     html.push_str(&format!("<tr>"));
 
                     for col in row {
-                        if col.contains("---") {
-                            continue;
-                        }
-
                         html.push_str(&format!("<td>{col}</td>"));
                     }
 
