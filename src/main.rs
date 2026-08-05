@@ -20,6 +20,7 @@ enum Node {
     Quote(String),
 
     Table {
+        headers: Vec<Vec<String>>,
         rows: Vec<Vec<String>>,
     },
 }
@@ -93,9 +94,10 @@ fn parse(input: &str) -> Ast {
             document.push(Node::Quote(trimmed[2..].to_string()));
             continue;
         } else if trimmed.starts_with('|') {
-            let mut rows: Vec<Vec<String>> = Vec::new();
+            let mut headers = Vec::new();
+            let mut rows = Vec::new();
 
-            rows.push(
+            headers.push(
                 trimmed
                     .split('|')
                     .map(str::trim)
@@ -122,7 +124,7 @@ fn parse(input: &str) -> Ast {
                 lines.next();
             }
 
-            document.push(Node::Table { rows });
+            document.push(Node::Table { headers, rows });
             continue;
         } else {
             document.push(Node::Paragraph(trimmed.to_string()));
@@ -158,22 +160,35 @@ fn render(ast: &Ast) -> String {
                 "<pre><code = class=\"language-{language}\">{code_lines}</code></pre>"
             )),
             Node::Quote(t) => html.push_str(&format!("<q>{t}</q>")),
-            Node::Table { rows } => {
+            Node::Table { headers, rows } => {
                 html.push_str(&format!("<div class=\"table-wrapper\"><table><thead><tr>"));
 
-                // TODO: have to figure out how to put the table headers
-                // for h in headers {
-                //     html.push_str(&format!("<tht>{h}</th>"));
-                // }
+                for row in headers {
+                    for col in row {
+                        html.push_str(&format!("<th>{col}</th>"));
+                    }
+                }
 
                 html.push_str(&format!("</tr></thead>"));
 
                 html.push_str(&format!("<tbody>"));
 
                 for row in rows {
-                    for col in row {
-                        html.push_str(&format!("<tr><td>{col}</td></tr>"));
+                    if row.iter().any(|s| s.contains("---")) {
+                        continue;
                     }
+
+                    html.push_str(&format!("<tr>"));
+
+                    for col in row {
+                        if col.contains("---") {
+                            continue;
+                        }
+
+                        html.push_str(&format!("<td>{col}</td>"));
+                    }
+
+                    html.push_str(&format!("</tr>"));
                 }
 
                 html.push_str(&format!("</tbody></table></div>"));
