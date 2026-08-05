@@ -160,6 +160,7 @@ fn render(ast: &Ast) -> String {
             Node::Table { cols } => {
                 html.push_str(&format!("<div class=\"table-wrapper\"><table><thead><tr>"));
 
+                // TODO: have to figure out how to put the table headers
                 // for h in headers {
                 //     html.push_str(&format!("<tht>{h}</th>"));
                 // }
