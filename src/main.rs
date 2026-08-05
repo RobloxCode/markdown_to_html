@@ -22,8 +22,6 @@ enum Node {
     Table {
         cols: Vec<Vec<String>>,
     },
-
-    HorizontalRule,
 }
 
 #[derive(Debug)]
