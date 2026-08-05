@@ -133,6 +133,12 @@ fn parse(input: &str) -> Ast {
     Ast { document }
 }
 
+fn render(ast: &Ast) -> String {
+    let html = String::new();
+
+    html
+}
+
 fn main() {
     let ast = parse(
         "# Product Update
