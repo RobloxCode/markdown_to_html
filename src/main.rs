@@ -12,5 +12,7 @@ fn main() -> std::io::Result<()> {
     let ast = Parser::parse(&markdown);
     let html = HtmlRenderer::render(&ast);
     fs::write("parsed.html", html)?;
+
+    println!("Parsed content saved in \"parsed.html\"");
     Ok(())
 }
