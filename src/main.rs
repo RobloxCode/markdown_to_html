@@ -8,6 +8,7 @@ enum Node {
     Paragraph(String),
 
     List {
+        // TODO: have to be able to check when the list is ordered (1., 2., 3., ...)
         ordered: bool,
         items: Vec<String>,
     },
@@ -20,6 +21,7 @@ enum Node {
     Quote(String),
 
     Table {
+        headers: Vec<String>,
         rows: Vec<Vec<String>>,
     },
 }
@@ -93,16 +95,16 @@ fn parse(input: &str) -> Ast {
             document.push(Node::Quote(trimmed[2..].to_string()));
             continue;
         } else if trimmed.starts_with('|') {
-            let mut rows: Vec<Vec<String>> = Vec::new();
+            let mut rows = Vec::new();
 
-            rows.push(
-                trimmed
-                    .split('|')
-                    .map(str::trim)
-                    .filter(|s| !s.is_empty())
-                    .map(str::to_string)
-                    .collect::<Vec<_>>(),
-            );
+            let headers = trimmed
+                .split('|')
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(str::to_string)
+                .collect::<Vec<_>>();
+
+            lines.next();
 
             while let Some(&next) = lines.peek() {
                 let ntri = next.trim();
@@ -122,7 +124,7 @@ fn parse(input: &str) -> Ast {
                 lines.next();
             }
 
-            document.push(Node::Table { rows });
+            document.push(Node::Table { headers, rows });
             continue;
         } else {
             document.push(Node::Paragraph(trimmed.to_string()));
@@ -158,22 +160,24 @@ fn render(ast: &Ast) -> String {
                 "<pre><code = class=\"language-{language}\">{code_lines}</code></pre>"
             )),
             Node::Quote(t) => html.push_str(&format!("<q>{t}</q>")),
-            Node::Table { rows } => {
+            Node::Table { headers, rows } => {
                 html.push_str(&format!("<div class=\"table-wrapper\"><table><thead><tr>"));
 
-                // TODO: have to figure out how to put the table headers
-                // for h in headers {
-                //     html.push_str(&format!("<tht>{h}</th>"));
-                // }
+                for h in headers {
+                    html.push_str(&format!("<th>{h}</th>"));
+                }
 
                 html.push_str(&format!("</tr></thead>"));
-
                 html.push_str(&format!("<tbody>"));
 
                 for row in rows {
+                    html.push_str(&format!("<tr>"));
+
                     for col in row {
-                        html.push_str(&format!("<tr><td>{col}</td></tr>"));
+                        html.push_str(&format!("<td>{col}</td>"));
                     }
+
+                    html.push_str(&format!("</tr>"));
                 }
 
                 html.push_str(&format!("</tbody></table></div>"));
