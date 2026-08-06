@@ -33,167 +33,177 @@ struct Ast {
     document: Vec<Node>,
 }
 
-fn parse(input: &str) -> Ast {
-    let mut document = Vec::new();
-    let mut lines = input.lines().peekable();
+#[derive(Debug)]
+struct Parser;
 
-    while let Some(line) = lines.next() {
-        let trimmed = line.trim();
+impl Parser {
+    fn parse(markdown: &str) -> Ast {
+        let mut document = Vec::new();
+        let mut lines = markdown.lines().peekable();
 
-        if trimmed.is_empty() {
-            continue;
-        }
+        while let Some(line) = lines.next() {
+            let trimmed = line.trim();
 
-        if trimmed.starts_with('#') {
-            let level = trimmed.chars().take_while(|&c| c == '#').count();
-            let text = trimmed[level + 1..].to_string();
-
-            document.push(Node::Heading { level, text });
-        } else if trimmed.starts_with("- ") {
-            let mut items = Vec::new();
-
-            items.push(trimmed[2..].to_string());
-
-            while let Some(&next) = lines.peek() {
-                let ntri = next.trim();
-
-                if ntri.starts_with("- ") {
-                    items.push(ntri[2..].to_string());
-                    lines.next();
-                } else {
-                    break;
-                }
+            if trimmed.is_empty() {
+                continue;
             }
 
-            document.push(Node::List {
-                // ordered: false,
-                items,
-            });
+            if trimmed.starts_with('#') {
+                let level = trimmed.chars().take_while(|&c| c == '#').count();
+                let text = trimmed[level + 1..].to_string();
 
-            continue;
-        } else if trimmed.starts_with("```") {
-            let language = trimmed[3..].to_string();
-            let mut code_lines = String::new();
+                document.push(Node::Heading { level, text });
+            } else if trimmed.starts_with("- ") {
+                let mut items = Vec::new();
 
-            while let Some(&next) = lines.peek() {
-                let ntri = next.trim();
+                items.push(trimmed[2..].to_string());
 
-                if ntri.starts_with("```") {
-                    lines.next();
-                    break;
+                while let Some(&next) = lines.peek() {
+                    let ntri = next.trim();
+
+                    if ntri.starts_with("- ") {
+                        items.push(ntri[2..].to_string());
+                        lines.next();
+                    } else {
+                        break;
+                    }
                 }
 
-                code_lines.push_str(ntri);
-                lines.next();
-            }
+                document.push(Node::List {
+                    // ordered: false,
+                    items,
+                });
 
-            document.push(Node::Code {
-                language,
-                code_lines,
-            });
+                continue;
+            } else if trimmed.starts_with("```") {
+                let language = trimmed[3..].to_string();
+                let mut code_lines = String::new();
 
-            continue;
-        } else if trimmed.starts_with('>') {
-            document.push(Node::Quote(trimmed[2..].to_string()));
-            continue;
-        } else if trimmed.starts_with('|') {
-            let mut rows = Vec::new();
+                while let Some(&next) = lines.peek() {
+                    let ntri = next.trim();
 
-            let headers = trimmed
-                .split('|')
-                .map(str::trim)
-                .filter(|s| !s.is_empty())
-                .map(str::to_string)
-                .collect::<Vec<_>>();
-
-            lines.next();
-
-            while let Some(&next) = lines.peek() {
-                let ntri = next.trim();
-
-                if !ntri.starts_with('|') {
-                    break;
-                }
-
-                rows.push(
-                    ntri.split('|')
-                        .map(|s| s.trim())
-                        .filter(|s| !s.is_empty())
-                        .map(|s| s.to_string())
-                        .collect::<Vec<_>>(),
-                );
-
-                lines.next();
-            }
-
-            document.push(Node::Table { headers, rows });
-            continue;
-        } else {
-            document.push(Node::Paragraph(trimmed.to_string()));
-            continue;
-        }
-    }
-
-    Ast { document }
-}
-
-fn render(ast: &Ast) -> String {
-    let mut html = String::new();
-
-    for item in ast.document.iter() {
-        match item {
-            Node::Heading { level, text } => {
-                html.push_str(&format!("<h{level}>{text}</h<{level}>"))
-            }
-            Node::Paragraph(t) => html.push_str(&format!("<p>{t}</p>")),
-            Node::List { items } => {
-                html.push_str(&format!("<ul>"));
-
-                for s in items {
-                    html.push_str(&format!("<li>{s}</li>"));
-                }
-
-                html.push_str(&format!("</ul>"));
-            }
-            Node::Code {
-                language,
-                code_lines,
-            } => html.push_str(&format!(
-                "<pre><code = class=\"language-{language}\">{code_lines}</code></pre>"
-            )),
-            Node::Quote(t) => html.push_str(&format!("<q>{t}</q>")),
-            Node::Table { headers, rows } => {
-                html.push_str(&format!("<div class=\"table-wrapper\"><table><thead><tr>"));
-
-                for h in headers {
-                    html.push_str(&format!("<th>{h}</th>"));
-                }
-
-                html.push_str(&format!("</tr></thead>"));
-                html.push_str(&format!("<tbody>"));
-
-                for row in rows {
-                    html.push_str(&format!("<tr>"));
-
-                    for col in row {
-                        html.push_str(&format!("<td>{col}</td>"));
+                    if ntri.starts_with("```") {
+                        lines.next();
+                        break;
                     }
 
-                    html.push_str(&format!("</tr>"));
+                    code_lines.push_str(ntri);
+                    lines.next();
                 }
 
-                html.push_str(&format!("</tbody></table></div>"));
+                document.push(Node::Code {
+                    language,
+                    code_lines,
+                });
+
+                continue;
+            } else if trimmed.starts_with('>') {
+                document.push(Node::Quote(trimmed[2..].to_string()));
+                continue;
+            } else if trimmed.starts_with('|') {
+                let mut rows = Vec::new();
+
+                let headers = trimmed
+                    .split('|')
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                    .map(str::to_string)
+                    .collect::<Vec<_>>();
+
+                lines.next();
+
+                while let Some(&next) = lines.peek() {
+                    let ntri = next.trim();
+
+                    if !ntri.starts_with('|') {
+                        break;
+                    }
+
+                    rows.push(
+                        ntri.split('|')
+                            .map(|s| s.trim())
+                            .filter(|s| !s.is_empty())
+                            .map(|s| s.to_string())
+                            .collect::<Vec<_>>(),
+                    );
+
+                    lines.next();
+                }
+
+                document.push(Node::Table { headers, rows });
+                continue;
+            } else {
+                document.push(Node::Paragraph(trimmed.to_string()));
+                continue;
             }
         }
-    }
 
-    html
+        Ast { document }
+    }
+}
+
+#[derive(Debug)]
+struct HtmlRenderer;
+
+impl HtmlRenderer {
+    fn render(ast: &Ast) -> String {
+        let mut html = String::new();
+
+        for item in ast.document.iter() {
+            match item {
+                Node::Heading { level, text } => {
+                    html.push_str(&format!("<h{level}>{text}</h<{level}>"))
+                }
+                Node::Paragraph(t) => html.push_str(&format!("<p>{t}</p>")),
+                Node::List { items } => {
+                    html.push_str(&format!("<ul>"));
+
+                    for s in items {
+                        html.push_str(&format!("<li>{s}</li>"));
+                    }
+
+                    html.push_str(&format!("</ul>"));
+                }
+                Node::Code {
+                    language,
+                    code_lines,
+                } => html.push_str(&format!(
+                    "<pre><code = class=\"language-{language}\">{code_lines}</code></pre>"
+                )),
+                Node::Quote(t) => html.push_str(&format!("<q>{t}</q>")),
+                Node::Table { headers, rows } => {
+                    html.push_str(&format!("<div class=\"table-wrapper\"><table><thead><tr>"));
+
+                    for h in headers {
+                        html.push_str(&format!("<th>{h}</th>"));
+                    }
+
+                    html.push_str(&format!("</tr></thead>"));
+                    html.push_str(&format!("<tbody>"));
+
+                    for row in rows {
+                        html.push_str(&format!("<tr>"));
+
+                        for col in row {
+                            html.push_str(&format!("<td>{col}</td>"));
+                        }
+
+                        html.push_str(&format!("</tr>"));
+                    }
+
+                    html.push_str(&format!("</tbody></table></div>"));
+                }
+            }
+        }
+
+        html
+    }
 }
 
 fn main() -> std::io::Result<()> {
-    let content = fs::read_to_string("src/md_src.md")?;
-    let ast = parse(&content);
-    let html = render(&ast);
+    let markdown = fs::read_to_string("src/md_src.md")?;
+    let ast = Parser::parse(&markdown);
+    let html = HtmlRenderer::render(&ast);
     fs::write("parsed.html", html)?;
     Ok(())
 }
