@@ -1,3 +1,5 @@
+use std::fs;
+
 #[derive(Debug)]
 enum Node {
     Heading {
@@ -9,7 +11,7 @@ enum Node {
 
     List {
         // TODO: have to be able to check when the list is ordered (1., 2., 3., ...)
-        ordered: bool,
+        // ordered: bool,
         items: Vec<String>,
     },
 
@@ -64,7 +66,7 @@ fn parse(input: &str) -> Ast {
             }
 
             document.push(Node::List {
-                ordered: false,
+                // ordered: false,
                 items,
             });
 
@@ -144,7 +146,7 @@ fn render(ast: &Ast) -> String {
                 html.push_str(&format!("<h{level}>{text}</h<{level}>"))
             }
             Node::Paragraph(t) => html.push_str(&format!("<p>{t}</p>")),
-            Node::List { ordered: _, items } => {
+            Node::List { items } => {
                 html.push_str(&format!("<ul>"));
 
                 for s in items {
@@ -188,7 +190,7 @@ fn render(ast: &Ast) -> String {
     html
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let ast = parse(
         "# Product Update
 
@@ -218,6 +220,7 @@ fn main() {
     );
 
     let html = render(&ast);
+    fs::write("parsed.html", html)?;
 
-    println!("{:?}", html);
+    Ok(())
 }
