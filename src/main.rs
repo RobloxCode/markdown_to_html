@@ -9,14 +9,9 @@ use std::env;
 use std::fs;
 
 fn main() -> std::io::Result<()> {
-    let path: String;
-    let args: Vec<String> = env::args().collect();
-
-    if args.len() == 2 {
-        path = args[1].clone();
-    } else {
-        path = "src/markdown.md".to_string();
-    }
+    let path = env::args()
+        .nth(1)
+        .unwrap_or_else(|| "src/mardkown.md".to_string());
 
     let markdown = fs::read_to_string(path)?;
     let ast = Parser::parse(&markdown);
