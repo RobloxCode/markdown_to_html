@@ -5,10 +5,15 @@ mod renderer;
 use parser::Parser;
 use renderer::HtmlRenderer;
 
+use std::env;
 use std::fs;
 
 fn main() -> std::io::Result<()> {
-    let markdown = fs::read_to_string("src/markdown.md")?;
+    let path = env::args()
+        .nth(1)
+        .unwrap_or_else(|| "src/markdown.md".to_string());
+
+    let markdown = fs::read_to_string(path)?;
     let ast = Parser::parse(&markdown);
     let html = HtmlRenderer::render(&ast);
     fs::write("parsed.html", html)?;
