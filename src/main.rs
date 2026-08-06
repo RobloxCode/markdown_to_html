@@ -11,7 +11,7 @@ use std::fs;
 fn main() -> std::io::Result<()> {
     let path = env::args()
         .nth(1)
-        .unwrap_or_else(|| "src/mardkown.md".to_string());
+        .unwrap_or_else(|| "src/markdown.md".to_string());
 
     let markdown = fs::read_to_string(path)?;
     let ast = Parser::parse(&markdown);
