@@ -21,7 +21,7 @@ enum Node {
     Quote(String),
 
     Table {
-        headers: Vec<Vec<String>>,
+        headers: Vec<String>,
         rows: Vec<Vec<String>>,
     },
 }
@@ -95,17 +95,14 @@ fn parse(input: &str) -> Ast {
             document.push(Node::Quote(trimmed[2..].to_string()));
             continue;
         } else if trimmed.starts_with('|') {
-            let mut headers = Vec::new();
             let mut rows = Vec::new();
 
-            headers.push(
-                trimmed
-                    .split('|')
-                    .map(str::trim)
-                    .filter(|s| !s.is_empty())
-                    .map(str::to_string)
-                    .collect::<Vec<_>>(),
-            );
+            let headers = trimmed
+                .split('|')
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(str::to_string)
+                .collect::<Vec<_>>();
 
             lines.next();
 
@@ -166,10 +163,8 @@ fn render(ast: &Ast) -> String {
             Node::Table { headers, rows } => {
                 html.push_str(&format!("<div class=\"table-wrapper\"><table><thead><tr>"));
 
-                for row in headers {
-                    for col in row {
-                        html.push_str(&format!("<th>{col}</th>"));
-                    }
+                for h in headers {
+                    html.push_str(&format!("<th>{h}</th>"));
                 }
 
                 html.push_str(&format!("</tr></thead>"));
