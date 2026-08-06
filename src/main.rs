@@ -1,3 +1,5 @@
+use std::fs;
+
 #[derive(Debug)]
 enum Node {
     Heading {
@@ -9,7 +11,7 @@ enum Node {
 
     List {
         // TODO: have to be able to check when the list is ordered (1., 2., 3., ...)
-        ordered: bool,
+        // ordered: bool,
         items: Vec<String>,
     },
 
@@ -64,7 +66,7 @@ fn parse(input: &str) -> Ast {
             }
 
             document.push(Node::List {
-                ordered: false,
+                // ordered: false,
                 items,
             });
 
@@ -144,7 +146,7 @@ fn render(ast: &Ast) -> String {
                 html.push_str(&format!("<h{level}>{text}</h<{level}>"))
             }
             Node::Paragraph(t) => html.push_str(&format!("<p>{t}</p>")),
-            Node::List { ordered: _, items } => {
+            Node::List { items } => {
                 html.push_str(&format!("<ul>"));
 
                 for s in items {
@@ -188,36 +190,10 @@ fn render(ast: &Ast) -> String {
     html
 }
 
-fn main() {
-    let ast = parse(
-        "# Product Update
-
-        ## Highlights
-
-        Ship notes are easier to publish when your draft stays in Markdown.
-
-        - Faster editing for docs teams
-        - Simple formatting for writers
-        - Easy reuse inside CMS editors
-
-        > Keep the structure clean before you paste the final HTML.
-
-        ### Release Table
-
-        | Area | Status |
-        | --- | --- |
-        | Docs | Ready |
-        | Email | Drafting |
-
-        ```js
-        console.log('Markdown to HTML');
-        ```
-
-        Visit [the release page](https://markdowntoword.io/) for the full changelog.
-        ",
-    );
-
+fn main() -> std::io::Result<()> {
+    let content = fs::read_to_string("src/md_src.md")?;
+    let ast = parse(&content);
     let html = render(&ast);
-
-    println!("{:?}", html);
+    fs::write("parsed.html", html)?;
+    Ok(())
 }
