@@ -17,9 +17,9 @@ cargo build --release
 ```
 
 ## Usage
-
+you can specify a path or else it would use the code in the file `src/input.md`
 ```bash
-cargo run -- input.md > output.html
+cargo run [path]
 ```
 
 Or, using the compiled binary:
