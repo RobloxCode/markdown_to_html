@@ -11,13 +11,13 @@ use std::fs;
 fn main() -> std::io::Result<()> {
     let path = env::args()
         .nth(1)
-        .unwrap_or_else(|| "src/markdown.md".to_string());
+        .unwrap_or_else(|| "src/input.md".to_string());
 
     let markdown = fs::read_to_string(path)?;
     let ast = Parser::parse(&markdown);
     let html = HtmlRenderer::render(&ast);
-    fs::write("parsed.html", html)?;
+    fs::write("output.html", html)?;
 
-    println!("Parsed content saved in \"parsed.html\"");
+    println!("Parsed content saved in \"output.html\"");
     Ok(())
 }
