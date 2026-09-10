@@ -12,7 +12,9 @@ impl HtmlRenderer {
                 Node::Heading { level, text } => {
                     html.push_str(&format!("<h{level}>{text}</h<{level}>"))
                 }
+
                 Node::Paragraph(t) => html.push_str(&format!("<p>{t}</p>")),
+
                 Node::List { items } => {
                     html.push_str(&format!("<ul>"));
 
@@ -22,13 +24,16 @@ impl HtmlRenderer {
 
                     html.push_str(&format!("</ul>"));
                 }
+
                 Node::Code {
                     language,
                     code_lines,
                 } => html.push_str(&format!(
                     "<pre><code = class=\"language-{language}\">{code_lines}</code></pre>"
                 )),
+
                 Node::Quote(t) => html.push_str(&format!("<q>{t}</q>")),
+
                 Node::Table { headers, rows } => {
                     html.push_str(&format!("<div class=\"table-wrapper\"><table><thead><tr>"));
 
